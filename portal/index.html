@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Apertura digital | Banco Demo</title>
+  <meta name="description" content="Solicita tu cuenta o tarjeta en línea.">
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="brand">Banco Demo</p>
+      <h1>Abre tu producto en línea</h1>
+      <p class="lead">Completa tus datos y te damos una respuesta preliminar en segundos.</p>
+    </header>
+
+    <form id="onboarding-form" novalidate>
+      <div class="field">
+        <label for="prospect_name">Nombre completo</label>
+        <input id="prospect_name" name="prospect_name" type="text" autocomplete="name"
+               minlength="2" maxlength="120" required>
+        <p class="field-error" id="prospect_name-error" hidden></p>
+      </div>
+
+      <div class="field">
+        <label for="document_id">Cédula de identidad</label>
+        <input id="document_id" name="document_id" type="text" inputmode="numeric"
+               pattern="[0-9]{10}" maxlength="10" autocomplete="off" required
+               aria-describedby="document_id-hint document_id-error">
+        <p class="hint" id="document_id-hint">10 dígitos, sin guiones.</p>
+        <p class="field-error" id="document_id-error" hidden></p>
+      </div>
+
+      <div class="field">
+        <label for="product">Producto</label>
+        <select id="product" name="product" required>
+          <option value="cuenta_ahorros">Cuenta de ahorros</option>
+          <option value="cuenta_corriente">Cuenta corriente</option>
+          <option value="tarjeta_credito">Tarjeta de crédito</option>
+        </select>
+      </div>
+
+      <button type="submit" id="submit">Solicitar</button>
+    </form>
+
+    <section id="result" aria-live="polite" tabindex="-1" hidden></section>
+
+    <details class="lab">
+      <summary>Casos de demostración (laboratorio)</summary>
+      <p class="hint">Datos ficticios. Cada cédula activa un escenario distinto del sistema.</p>
+      <ul>
+        <li><button type="button" data-document="1712345678">Apto</button></li>
+        <li><button type="button" data-document="1712345677">Identidad ambigua</button></li>
+        <li><button type="button" data-document="1712345679">Identidad no verificada</button></li>
+        <li><button type="button" data-document="1712345676">Revisión adicional</button></li>
+        <li><button type="button" data-document="9612345678">Falta información</button></li>
+        <li><button type="button" data-document="9912345678">Servicio no disponible</button></li>
+      </ul>
+    </details>
+  </main>
+</body>
+</html>

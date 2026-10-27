@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+.pytest_cache/
+build/
+infra/cdk.out/
+infra/node_modules/
+infra/outputs.json

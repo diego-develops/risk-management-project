@@ -1,0 +1,23 @@
+[project]
+name = "risk-management-project"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic>=2.14.1",
+]
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+]
+infra = [
+    "aws-cdk-lib>=2.275.0",
+    "constructs>=10.8.1",
+]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
+
+[tool.uv]
+default-groups = ["dev", "infra"]
