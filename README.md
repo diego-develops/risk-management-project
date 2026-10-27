@@ -295,7 +295,25 @@ Los tests del redactor usan clientes falsos: **no llaman a AWS**.
 
 ## 7. Arquitectura
 
-Sigue el diagrama del laboratorio (Portal → API Gateway/Guardrails → Lambda → agentes, con modelos y KB), con una adición: CloudFront, para no exponer la API key.
+### 7.1 Diagrama de referencia del laboratorio
+
+![Diagrama de arquitectura de referencia: Portal Web, API Gateway con Bedrock Guardrails, LambdaAgent, modelos (Nova Lite, Nova Pro, Titan Embeddings), KB con S3 Vector Store y S3, y Agent0-Agent4](docs/arquitectura-referencia.png)
+
+*Fuente: [álbum original en Imgur](https://imgur.com/a/V3KHaJd). Copia local en `docs/arquitectura-referencia.png`.*
+
+La implementación sigue este diagrama con las siguientes diferencias, todas deliberadas:
+
+| En el diagrama | En la implementación | Motivo |
+|---|---|---|
+| Portal Web → API Gateway | Portal → **CloudFront** (S3 privado), que reenvía `/api/*` a API Gateway **e inyecta la API key** | Una página estática no puede guardar una key sin exponerla |
+| Models: Nova Lite, **Nova Pro**, Titan | Solo **Nova Lite** y Titan Embeddings v2 | Nova Pro exige cross-Region inference, que este proyecto no permite |
+| Bedrock Guardrails junto a API Gateway | El Guardrail se aplica **dentro del Lambda**, en la llamada `Converse` (entrada y salida) | API Gateway no invoca Guardrails por sí solo |
+| LambdaAgent → Agent0…Agent4 como agentes | Agent0 es el orquestador dentro del Lambda; Agent1-4 son componentes de código, **no Bedrock Agents** | Bedrock Agents clásico está en modo mantenimiento y dejaría al LLM decidir el flujo |
+| Agentes → Models | Solo **Agent4** invoca un modelo; Agent1-3 usan las herramientas mock | El LLM redacta, no decide |
+| KB + S3 Vector Store + S3 | Igual: KB con S3 Vectors, y un bucket S3 con las 5 políticas | — |
+| KB → Agentes | La KB se consulta desde el redactor (Agent4) para fundamentar el mensaje | Los documentos requeridos los entrega la herramienta mock |
+
+### 7.2 Implementación desplegada
 
 ```
 Usuario ─▶ CloudFront ──────────────▶ S3 privado (portal HTML/JS/CSS)
@@ -317,7 +335,7 @@ Usuario ─▶ CloudFront ──────────────▶ S3 priva
                                                                            └─ Titan Embeddings v2
 ```
 
-### Flujo de una solicitud
+### 7.3 Flujo de una solicitud
 
 1. **Validación** del request (formato de cédula, nombre solo con letras, producto válido).
 2. **Agent1** y **Agent2** corren **siempre ambos**: Cumplimiento quiere el panorama completo aunque uno falle.
@@ -327,7 +345,7 @@ Usuario ─▶ CloudFront ──────────────▶ S3 priva
 6. **Agent4** redacta el mensaje. Nova Lite **reescribe** una plantilla determinista; no decide nada.
 7. Se devuelve **solo la vista del cliente**. La vista interna va al log.
 
-### Los agentes
+### 7.4 Los agentes
 
 | Agente | Responsabilidad | Herramienta permitida | ¿LLM? |
 |---|---|---|---|
@@ -339,7 +357,7 @@ Usuario ─▶ CloudFront ──────────────▶ S3 priva
 
 El agente de respuesta **no tiene herramientas**, así que nunca ve datos de listas de riesgo.
 
-### Uso de la Knowledge Base
+### 7.5 Uso de la Knowledge Base
 
 La KB (5 políticas en `policies/`) se consulta para **fundamentar el tono y los mensajes** del redactor (política de comunicación). Los documentos requeridos los entrega la herramienta mock, no la KB; un test (`test_policies.py`) garantiza que ambas fuentes no se desfasen.
 
@@ -505,6 +523,7 @@ onboarding/            Aplicación (código que corre en el Lambda)
   audit.py               Log JSON y enmascarado de PII
   cloud.py               Redactor Bedrock (Nova Lite + Guardrail + KB) y salvaguardas
   handler.py             Entrypoint Lambda de POST /api/v1/onboarding/start
+docs/                  Diagrama de arquitectura de referencia (PNG)
 policies/              5 políticas ficticias (contenido de la KB)
 portal/                Portal web (HTML, JS y CSS, sin dependencias)
 infra/                 AWS CDK en Python (stack.py, app.py) y CLI de CDK fijado
